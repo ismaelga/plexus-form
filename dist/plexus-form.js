@@ -414,7 +414,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  displayName: 'CheckBox',
 
 	  handleChange: function(event) {
-	    var val = event.target.checked;
+	    var val = event.target.checked ? true : null;
 	    this.props.update(this.props.path, val, val);
 	  },
 	  render: function() {
@@ -538,16 +538,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	      };
 	    };
 
+	    var canRemoveItem = function(i, n) {
+	      return i < n;
+	    };
+
+	    var removeItem = function(props, i, n) {
+	      return function() {
+	        if(!canRemoveItem(i, n)) return;
+
+	        var newList = props.getValue(props.path);
+	        newList.splice(i, 1);
+	        props.update(props.path, newList, newList);
+	      };
+	    };
+
 	    var n = (props.getValue(props.path) || []).length + 1;
 	    var list = [];
 	    for (var i = 0; i < n; ++i) {
 	      list.push(fields.make(fields, ou.merge(props, {
-	        schema     : props.schema.items,
-	        path       : props.path.concat(i),
-	        moveUp     : moveUp(props, i, n),
-	        moveDown   : moveDown(props, i, n),
-	        canMoveUp  : canMoveUp(i, n),
-	        canMoveDown: canMoveDown(i, n)
+	        schema       : props.schema.items,
+	        path         : props.path.concat(i),
+	        moveUp       : moveUp(props, i, n),
+	        moveDown     : moveDown(props, i, n),
+	        canMoveUp    : canMoveUp(i, n),
+	        canMoveDown  : canMoveDown(i, n),
+	        removeItem   : removeItem(props, i, n),
+	        canRemoveItem: canRemoveItem(i, n)
 	      })));
 	    }
 
@@ -754,11 +770,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 
 	  if(section && props.isArrayItem) {
+	    if(props.isArrayItem) {
+	      var vals = props.getValue(props.path);
+	      var title = props.title;
+	      if(vals) {
+	        var itemHeaderKey = ou.getIn(props.schema, ['x-hints', 'itemHeader', "property"]);
+	        var itemHeader = (itemHeaderKey && vals[itemHeaderKey]) || vals.title || vals.name;
+	        title = title && itemHeader ? title + " - " + itemHeader : itemHeader || title;
+	      }
+
+	      propsFW = ou.merge(propsFW, {
+	        title        : title,
+	        moveUp       : props.moveUp,
+	        moveDown     : props.moveDown,
+	        canMoveUp    : props.canMoveUp,
+	        canMoveDown  : props.canMoveDown,
+	        removeItem   : props.removeItem,
+	        canRemoveItem: props.canRemoveItem
+	      });
+	    }
+
 	    propsFW = ou.merge(propsFW, {
-	      moveUp     : props.moveUp,
-	      moveDown   : props.moveDown,
-	      canMoveUp  : props.canMoveUp,
-	      canMoveDown: props.canMoveDown,
 	      isArrayItem: props.isArrayItem
 	    });
 	  }
