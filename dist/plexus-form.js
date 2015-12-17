@@ -510,6 +510,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return types.object(fields, ou.merge(props, { schema: s }));
 	  },
 	  array: function(fields, props) {
+	    var move = function(props, i, n) {
+		  return function(to) {
+	        if(!canMoveUp(i, n) && !canMoveDown(i, n)) return;
+	        var newList = props.getValue(props.path);
+	        var value = newList.splice(to, 1);
+
+	        newList.splice(i, 0, value[0]);
+	        props.update(props.path, newList, newList);
+	      };
+		};
 	    var canMoveUp = function(i, n) {
 	      return i > 0 && i < n - 1;
 	    };
@@ -558,6 +568,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      list.push(fields.make(fields, ou.merge(props, {
 	        schema       : props.schema.items,
 	        path         : props.path.concat(i),
+	        move         : move(props, i, n),
 	        moveUp       : moveUp(props, i, n),
 	        moveDown     : moveDown(props, i, n),
 	        canMoveUp    : canMoveUp(i, n),
@@ -766,7 +777,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    classes    : ou.getIn(props.schema, ['x-hints', 'form', 'classes']),
 	    title      : props.schema.title,
 	    type       : props.schema.type,
-	    description: props.schema.description
+	    description: props.schema.description,
+	    schema     : props.schema
 	  };
 
 	  if(section && props.isArrayItem) {
@@ -780,7 +792,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      propsFW = ou.merge(propsFW, {
-	        title        : title,
+	        title        : title || propsFW.title,
+	        move         : props.move,
 	        moveUp       : props.moveUp,
 	        moveDown     : props.moveDown,
 	        canMoveUp    : props.canMoveUp,
@@ -1038,6 +1051,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      delete(props.isArrayItem);
 	      delete(props.canMoveUp);
 	      delete(props.canMoveDown);
+	      delete(props.move);
 	      delete(props.moveUp);
 	      delete(props.moveDown);
 	    } else {
